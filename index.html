@@ -103,43 +103,12 @@ html, body {
 .amount-label {
   color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 8px;
 }
-.claim-btn {
-  display: none; margin-top: 30px; padding: 14px 44px;
-  background: linear-gradient(135deg, #ffd700, #f0a500);
-  color: #cf1322; border: none; border-radius: 25px;
-  font-size: 1rem; font-weight: 700; cursor: pointer;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(255,215,0,0.4);
-  transition: transform 0.2s ease;
-}
-.claim-btn:active { transform: scale(0.95); }
 
-/* ===== 口令弹窗 ===== */
-.kouling-modal {
-  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6); z-index: 100;
-  align-items: center; justify-content: center;
-}
-.kouling-modal.show { display: flex; }
-.kouling-card {
-  background: #fff; border-radius: 16px; padding: 30px 28px;
-  text-align: center; width: 280px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-}
-.kouling-title { color: #cf1322; font-size: 0.9rem; margin-bottom: 16px; }
-.kouling-code {
-  font-size: 2rem; font-weight: 900; color: #cf1322;
-  letter-spacing: 0.15em; margin-bottom: 20px;
-  padding: 12px; background: #fff5f5; border-radius: 8px;
-}
-.kouling-copy {
-  padding: 10px 36px; background: #cf1322; color: #fff;
-  border: none; border-radius: 20px; font-size: 0.95rem;
-  font-weight: 600; cursor: pointer;
-}
-.kouling-copy:active { background: #a8071a; }
-.kouling-hint {
-  margin-top: 14px; font-size: 0.75rem; color: #999;
+/* ===== 祝福语 ===== */
+.bless-msg {
+  margin-top: 24px; color: rgba(255,255,255,0.9);
+  font-size: 0.95rem; letter-spacing: 0.1em;
+  opacity: 0; transition: opacity 0.8s ease;
 }
 
 /* ===== 动画 ===== */
@@ -195,17 +164,7 @@ html, body {
       </div>
     </div>
   </div>
-  <a id="claimBtn" class="claim-btn" onclick="showKouling(event)">领取红包</a>
-
-  <!-- 口令弹窗 -->
-  <div id="koulingModal" class="kouling-modal">
-    <div class="kouling-card">
-      <p class="kouling-title">支付宝红包口令</p>
-      <p class="kouling-code" id="koulingCode"></p>
-      <button class="kouling-copy" onclick="copyKouling()">复制口令</button>
-      <p class="kouling-hint">复制后打开支付宝，自动领取</p>
-    </div>
-  </div>
+  <div id="blessMsg" class="bless-msg">红包已送达，请查收</div>
 </div>
 
 <script>
@@ -218,7 +177,6 @@ const CONFIG = {
   signature:    '张毅',
   amount:       '88.88',
   envelopeLink: '',
-  kouling: '26110198',  // 支付宝口令红包
 };
 
 /* ===== 初始化 ===== */
@@ -229,7 +187,6 @@ document.getElementById('message').innerHTML =
   }).join('');
 document.querySelector('.signature').textContent = '—— ' + CONFIG.signature;
 document.querySelector('.amount').textContent = '¥ ' + CONFIG.amount;
-document.getElementById('koulingCode').textContent = CONFIG.kouling;
 
 /* ===== 屏幕切换 ===== */
 function goToScreen(n) {
@@ -247,40 +204,8 @@ function openEnvelope() {
   if (env.classList.contains('opened')) return;
   env.classList.add('opened');
   setTimeout(function() {
-    var btn = document.getElementById('claimBtn');
-    btn.style.display = 'inline-block';
-    btn.style.opacity = '0';
-    requestAnimationFrame(function() {
-      btn.style.transition = 'opacity 0.6s ease';
-      btn.style.opacity = '1';
-    });
+    document.getElementById('blessMsg').style.opacity = '1';
   }, 800);
-}
-
-/* ===== 口令弹窗 ===== */
-function showKouling(e) {
-  e.preventDefault();
-  document.getElementById('koulingModal').classList.add('show');
-}
-function copyKouling() {
-  var code = CONFIG.kouling;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(code).then(function() { copiedFeedback(); });
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = code; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta); copiedFeedback();
-  }
-}
-function copiedFeedback() {
-  var btn = document.querySelector('.kouling-copy');
-  btn.textContent = '已复制';
-  btn.style.background = '#52c41a';
-  setTimeout(function() {
-    btn.textContent = '复制口令';
-    btn.style.background = '#cf1322';
-  }, 2000);
 }
 
 /* ===== 烟花效果 ===== */
