@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>新年快乐</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== 屏幕切换 ===== */
+.screen {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.screen.active { opacity: 1; pointer-events: auto; }
+
+/* ===== 第一屏: 新年快乐 ===== */
+#screen1 { background: radial-gradient(ellipse at center, #2d0a0a 0%, #0a0000 100%); }
+#fireworks { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.greeting {
+  font-size: clamp(2.4rem, 10vw, 3.6rem);
+  font-weight: 900; color: #ffd700; z-index: 1;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 20px rgba(255,215,0,0.6), 0 0 40px rgba(255,215,0,0.3);
+  animation: breathe 2s ease-in-out infinite;
+}
+.tap-hint {
+  position: absolute; bottom: 60px; font-size: 0.85rem; z-index: 1;
+  color: rgba(255,215,0,0.5);
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+/* ===== 第二屏: 照片 + 情话 ===== */
+#screen2 { background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 50%, #ffd4d4 100%); }
+.photo-frame {
+  width: 180px; height: 180px; border-radius: 50%;
+  border: 4px solid #ffd700;
+  box-shadow: 0 0 30px rgba(255,215,0,0.3), 0 4px 20px rgba(0,0,0,0.1);
+  overflow: hidden; margin-bottom: 30px;
+  animation: floatUp 3s ease-in-out infinite;
+}
+.photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+.love-message {
+  max-width: 320px; padding: 0 24px;
+  color: #8b4513; font-size: 0.88rem; line-height: 1.9; text-align: center;
+  max-height: 50vh; overflow-y: auto;
+}
+.love-message p { margin-bottom: 12px; }
+.love-message .signature {
+  margin-top: 20px; font-style: italic; color: #c0392b; font-size: 0.9rem;
+}
+
+/* ===== 第三屏: 红包 ===== */
+#screen3 { background: radial-gradient(ellipse at center, #d4380d 0%, #a8071a 100%); }
+.envelope {
+  width: 260px; height: 380px; position: relative; cursor: pointer;
+}
+.envelope-body {
+  width: 100%; height: 100%; position: relative;
+  background: linear-gradient(180deg, #ff4d4f 0%, #cf1322 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.envelope-flap {
+  position: absolute; top: 0; left: 0; right: 0; height: 50%;
+  background: linear-gradient(180deg, #ff7875 0%, #ff4d4f 100%);
+  border-radius: 16px 16px 0 0;
+  transform-origin: top center;
+  transition: transform 0.6s ease;
+  z-index: 3;
+}
+.envelope.opened .envelope-flap { transform: rotateX(-180deg); }
+.envelope-seal {
+  width: 70px; height: 70px; border-radius: 50%;
+  background: linear-gradient(135deg, #ffd700, #f0a500);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: #cf1322; font-weight: 900;
+  box-shadow: 0 0 20px rgba(255,215,0,0.5);
+  z-index: 4; transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.envelope.opened .envelope-seal { transform: scale(0); opacity: 0; }
+.envelope-content {
+  position: absolute; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.5s ease 0.4s;
+}
+.envelope.opened .envelope-content { opacity: 1; }
+.amount {
+  font-size: 3rem; font-weight: 900; color: #ffd700;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.amount-label {
+  color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 8px;
+}
+.claim-btn {
+  display: none; margin-top: 30px; padding: 14px 44px;
+  background: linear-gradient(135deg, #ffd700, #f0a500);
+  color: #cf1322; border: none; border-radius: 25px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+  transition: transform 0.2s ease;
+}
+.claim-btn:active { transform: scale(0.95); }
+
+/* ===== 口令弹窗 ===== */
+.kouling-modal {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.kouling-modal.show { display: flex; }
+.kouling-card {
+  background: #fff; border-radius: 16px; padding: 30px 28px;
+  text-align: center; width: 280px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.kouling-title { color: #cf1322; font-size: 0.9rem; margin-bottom: 16px; }
+.kouling-code {
+  font-size: 2rem; font-weight: 900; color: #cf1322;
+  letter-spacing: 0.15em; margin-bottom: 20px;
+  padding: 12px; background: #fff5f5; border-radius: 8px;
+}
+.kouling-copy {
+  padding: 10px 36px; background: #cf1322; color: #fff;
+  border: none; border-radius: 20px; font-size: 0.95rem;
+  font-weight: 600; cursor: pointer;
+}
+.kouling-copy:active { background: #a8071a; }
+.kouling-hint {
+  margin-top: 14px; font-size: 0.75rem; color: #999;
+}
+
+/* ===== 动画 ===== */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.petal {
+  position: fixed; pointer-events: none; z-index: 0;
+  border-radius: 50% 0 50% 50%;
+  background: radial-gradient(ellipse at center, #ffb6c1, #ff69b4);
+}
+</style>
+</head>
+<body>
+
+<!-- ========== 第一屏: 新年快乐 ========== -->
+<div id="screen1" class="screen active" onclick="goToScreen(2)">
+  <canvas id="fireworks"></canvas>
+  <div class="greeting">新年快乐</div>
+  <div class="tap-hint">轻触屏幕</div>
+</div>
+
+<!-- ========== 第二屏: 照片 + 情话 ========== -->
+<div id="screen2" class="screen" onclick="goToScreen(3)">
+  <div class="photo-frame">
+    <img id="photo" src="" alt="">
+  </div>
+  <div class="love-message">
+    <p id="message"></p>
+    <p class="signature"></p>
+  </div>
+  <div class="tap-hint" style="color:rgba(139,69,19,0.4)">轻触继续</div>
+</div>
+
+<!-- ========== 第三屏: 红包 ========== -->
+<div id="screen3" class="screen">
+  <div class="envelope" id="envelope" onclick="openEnvelope()">
+    <div class="envelope-body">
+      <div class="envelope-flap"></div>
+      <div class="envelope-seal">開</div>
+      <div class="envelope-content">
+        <div class="amount"></div>
+        <div class="amount-label">恭喜发财 大吉大利</div>
+      </div>
+    </div>
+  </div>
+  <a id="claimBtn" class="claim-btn" onclick="showKouling(event)">领取红包</a>
+
+  <!-- 口令弹窗 -->
+  <div id="koulingModal" class="kouling-modal">
+    <div class="kouling-card">
+      <p class="kouling-title">支付宝红包口令</p>
+      <p class="kouling-code" id="koulingCode"></p>
+      <button class="kouling-copy" onclick="copyKouling()">复制口令</button>
+      <p class="kouling-hint">复制后打开支付宝，自动领取</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+ *  配置区 — 只需要改这里
+ * ============================================================ */
+const CONFIG = {
+  photoUrl:     'https://img11.360buyimg.com/ddimg/jfs/t1/395630/15/8489/16898/69945929Ff831e3be/001525f43801d1a2.jpg',
+  message:      '宝宝，这是我亲自为你制作小礼物，他们都说我不懂浪漫，实则不然因为是还没有遇到你，遇到你后我内心的浪漫细胞就开始迸发了\n\n像洪水猛兽怎么挡也挡不住，对你的喜欢不仅仅是表面我愿意为你付出我的时间和精力\n\n我们像大树和大地，小鱼和河流，飞鸟与天空那样，离开任何一方就会收到大自然的死亡通知书\n\n我爱你，请收下我的吻！',
+  signature:    '张毅',
+  amount:       '88.88',
+  envelopeLink: '',
+  kouling: '26110198',  // 支付宝口令红包
+};
+
+/* ===== 初始化 ===== */
+document.getElementById('photo').src = CONFIG.photoUrl;
+document.getElementById('message').innerHTML =
+  CONFIG.message.split('\n\n').map(function(p) {
+    return '<p>' + p + '</p>';
+  }).join('');
+document.querySelector('.signature').textContent = '—— ' + CONFIG.signature;
+document.querySelector('.amount').textContent = '¥ ' + CONFIG.amount;
+document.getElementById('koulingCode').textContent = CONFIG.kouling;
+
+/* ===== 屏幕切换 ===== */
+function goToScreen(n) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  document.getElementById('screen' + n).classList.add('active');
+  if (n === 2) startPetals();
+  if (n === 3) startGoldenParticles();
+}
+
+/* ===== 开红包 ===== */
+function openEnvelope() {
+  var env = document.getElementById('envelope');
+  if (env.classList.contains('opened')) return;
+  env.classList.add('opened');
+  setTimeout(function() {
+    var btn = document.getElementById('claimBtn');
+    btn.style.display = 'inline-block';
+    btn.style.opacity = '0';
+    requestAnimationFrame(function() {
+      btn.style.transition = 'opacity 0.6s ease';
+      btn.style.opacity = '1';
+    });
+  }, 800);
+}
+
+/* ===== 口令弹窗 ===== */
+function showKouling(e) {
+  e.preventDefault();
+  document.getElementById('koulingModal').classList.add('show');
+}
+function copyKouling() {
+  var code = CONFIG.kouling;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(function() { copiedFeedback(); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = code; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); copiedFeedback();
+  }
+}
+function copiedFeedback() {
+  var btn = document.querySelector('.kouling-copy');
+  btn.textContent = '已复制';
+  btn.style.background = '#52c41a';
+  setTimeout(function() {
+    btn.textContent = '复制口令';
+    btn.style.background = '#cf1322';
+  }, 2000);
+}
+
+/* ===== 烟花效果 ===== */
+;(function() {
+  var canvas = document.getElementById('fireworks');
+  var ctx = canvas.getContext('2d');
+  var W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var colors = ['#ffd700','#ff6b6b','#ff8c00','#ff69b4','#ffffff'];
+
+  function Particle(x, y) {
+    this.x = x; this.y = y;
+    this.color = colors[Math.random() * colors.length | 0];
+    var angle = Math.random() * Math.PI * 2;
+    var speed = Math.random() * 4 + 1;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.alpha = 1;
+    this.decay = Math.random() * 0.02 + 0.008;
+    this.size = Math.random() * 2.5 + 0.5;
+  }
+
+  function burst(x, y) {
+    for (var i = 0; i < 50; i++) particles.push(new Particle(x, y));
+  }
+
+  function loop() {
+    ctx.fillStyle = 'rgba(10,0,0,0.15)';
+    ctx.fillRect(0, 0, W, H);
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.alpha -= p.decay;
+      if (p.alpha <= 0) { particles.splice(i, 1); continue; }
+      ctx.save(); ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill(); ctx.restore();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function autoFire() {
+    if (document.getElementById('screen1').classList.contains('active')) {
+      burst(Math.random() * W * 0.6 + W * 0.2, Math.random() * H * 0.4 + H * 0.1);
+    }
+    setTimeout(autoFire, Math.random() * 1500 + 800);
+  }
+
+  loop();
+  autoFire();
+})();
+
+/* ===== 花瓣飘落 ===== */
+function startPetals() {
+  var screen = document.getElementById('screen2');
+  for (var i = 0; i < 12; i++) {
+    (function(delay) {
+      setTimeout(function() {
+        var petal = document.createElement('div');
+        petal.className = 'petal';
+        var size = Math.random() * 8 + 8;
+        petal.style.cssText =
+          'left:' + (Math.random() * window.innerWidth) + 'px;' +
+          'top:-20px;width:' + size + 'px;height:' + size + 'px;' +
+          'opacity:' + (Math.random() * 0.4 + 0.2);
+        screen.appendChild(petal);
+        var dur = (Math.random() * 4 + 4) * 1000;
+        petal.animate([
+          { transform: 'translateY(0) rotate(0deg)', opacity: 0.5 },
+          { transform: 'translateY(' + (window.innerHeight + 40) + 'px) rotate(' + (Math.random()*360) + 'deg)', opacity: 0 }
+        ], { duration: dur, easing: 'ease-in' });
+        setTimeout(function() { petal.remove(); }, dur);
+      }, delay);
+    })(i * 400);
+  }
+  setTimeout(function() {
+    if (document.getElementById('screen2').classList.contains('active')) startPetals();
+  }, 5500);
+}
+
+/* ===== 金色粒子 ===== */
+function startGoldenParticles() {
+  var screen = document.getElementById('screen3');
+  for (var i = 0; i < 15; i++) {
+    (function(delay) {
+      setTimeout(function() {
+        var p = document.createElement('div');
+        var size = Math.random() * 4 + 2;
+        p.style.cssText =
+          'position:fixed;border-radius:50%;pointer-events:none;z-index:0;' +
+          'width:' + size + 'px;height:' + size + 'px;background:#ffd700;' +
+          'left:' + (Math.random() * window.innerWidth) + 'px;' +
+          'top:' + (Math.random() * window.innerHeight) + 'px;';
+        screen.appendChild(p);
+        p.animate([
+          { opacity: 0, transform: 'scale(0)' },
+          { opacity: 0.7, transform: 'scale(1)' },
+          { opacity: 0, transform: 'scale(0) translateY(-30px)' }
+        ], { duration: 2000 + Math.random() * 2000 });
+        setTimeout(function() { p.remove(); }, 4000);
+      }, delay);
+    })(i * 200);
+  }
+  setTimeout(function() {
+    if (document.getElementById('screen3').classList.contains('active')) startGoldenParticles();
+  }, 3500);
+}
+</script>
+
+</body>
+</html>
